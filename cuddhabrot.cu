@@ -85,6 +85,13 @@ struct Complex
 		return *this;
 	}
 
+	__device__ static Complex iterate(Complex x, Complex c)
+	{
+		double re = fma(x.re, x.re, c.re) - x.im * x.im;
+		double im = fma(2*x.re, x.im, c.im);
+		return Complex(re, im);
+	}
+
 	double re, im;
 };
 
@@ -183,19 +190,20 @@ __global__ void generate(uint64* pic, curandState_t* rand_states, Array edge_cel
 	for (int block_it = 0; block_it < ITERATIONS_PER_BLOCK; block_it++)
 	{
 		old_x = x = c = init = rand_complex(&rand_state, edge_cells);
-		bool repetitive = false;
+		
+		bool has_diverged = false;
 		uint64 it;
 
 		for (it = 0; it < ITERATIONS_PER_POINT; it++)
 		{
-			x = x * x + c;
+			x = Complex::iterate(x, c);
 			if (outside(x))
 			{
+				has_diverged = true;
 				break;
 			}
 			if (x == old_x)
 			{
-				repetitive = true;
 				break;
 			}
 			if (is_power_of_two(it))
@@ -204,17 +212,13 @@ __global__ void generate(uint64* pic, curandState_t* rand_states, Array edge_cel
 			}
 		}
 
-		if (!repetitive && it < ITERATIONS_PER_POINT)
+		if (has_diverged)
 		{
 			x = c = init;
 			inc3(pic, x, it);
 			for (uint64 i = 0; i < it; i++)
 			{
-				x = x * x + c;
-				if (outside(x))
-				{
-					break;
-				}
+				x = Complex::iterate(x, c);
 				inc3(pic, x, it);
 			}
 		}
