@@ -22,11 +22,12 @@ const int TOTAL_CELLS = CELLS_PER_SIDE * CELLS_PER_SIDE;
 const int ITERATIONS_PER_CELL = 20;
 const int POINTS_PER_CELL = 10000;
 
+const uint64 TOTAL_POINTS = 100 * 1000 * 1000;
 const uint64 ITERATIONS_PER_POINT = 1000 * 1000;
 
-const int THREADS = 48;
-const int BLOCKS = 2560;
-const int ITERATIONS_PER_BLOCK = 83;
+const int THREADS = 50;
+const int BLOCKS = 2500;
+const int ITERATIONS_PER_BLOCK = TOTAL_POINTS / BLOCKS / THREADS;
 
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
